@@ -1,182 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Banff Travel Map</title>
+
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-measure/dist/leaflet-measure.css" />
 
 <style>
-  #map { height: 650px; }
+/* 전체 레이아웃 */
+.layout {
+  display: flex;
+  height: 100vh;
+}
 
-  /* 팝업 카드 스타일 */
-  .custom-tooltip {
-    background: #ffffff;
-    padding: 0;
-    border-radius: 12px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
-    border: 1px solid #e6e6e6;
-    width: 260px;
-    overflow: hidden;
-    font-size: 14px;
+/* 지도 */
+#map {
+  flex: 1;
+  height: 100%;
+}
+
+/* 일정표 패널 */
+.schedule-panel {
+  width: 340px;
+  background: #ffffff;
+  border-left: 1px solid #e0e0e0;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.tab.active {
+  background: #1e88e5;
+  color: white;
+}
+
+/* Day content */
+.day-content {
+  display: none;
+}
+
+.day-content.active {
+  display: block;
+}
+
+/* 일정표 */
+.schedule-list {
+  list-style: none;
+  padding: 0;
+}
+
+.schedule-list li {
+  margin-bottom: 15px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.schedule-list li:hover {
+  background: #f0f7ff;
+}
+
+.time {
+  font-weight: bold;
+  color: #1e88e5;
+  margin-right: 6px;
+}
+
+.reason {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #555;
+}
+
+/* 이동시간 라벨 */
+.time-label div {
+  background: #1e88e5;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  white-space: nowrap;
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
   }
-
-  /* 사진 + 그라데이션 */
-  .tooltip-img-wrapper {
-    position: relative;
+  #map {
+    height: 400px;
+  }
+  .schedule-panel {
     width: 100%;
-    height: 140px;
-    overflow: hidden;
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
   }
-
-  .tooltip-img-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .tooltip-img-wrapper::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      to bottom,
-      rgba(0,0,0,0.45),
-      rgba(0,0,0,0.15),
-      rgba(0,0,0,0)
-    );
-  }
-
-  .tooltip-content {
-    padding: 12px 14px;
-  }
-
-  .tooltip-title {
-    font-size: 16px;
-    font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .tooltip-section {
-    margin-top: 8px;
-    line-height: 1.4;
-  }
-
-  .tooltip-section span {
-    font-weight: bold;
-    color: #1e88e5;
-  }
-
-  .tooltip-section.warning span {
-    color: #e53935;
-  }
+}
 </style>
 </head>
+
 <body>
+<div class="layout">
+  <div id="map"></div>
 
-<div id="map"></div>
+  <div class="schedule-panel">
+    <div class="tabs">
+      <button class="tab active" data-day="day1">Day 1</button>
+      <button class="tab" data-day="day2">Day 2</button>
+      <button class="tab" data-day="day3">Day 3</button>
+    </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-measure/dist/leaflet-measure.js"></script>
+    <!-- DAY 1 -->
+    <div id="day1" class="day-content active">
+      <h3>📅 Day 1: Banff Town & Valley</h3>
+      <ul class="schedule-list">
+        <li data-place="존스턴 협곡">🥾 <span class="time">08:30 - 10:00</span> 존스턴 협곡
+          <div class="reason">완만한 데크 산책. 유모차 가능.</div>
+        </li>
 
-<script>
-  const map = L.map('map').setView([51.131, -114.010], 9);
+        <li data-place="보우 폭포">🏞️ <span class="time">10:30 - 12:00</span> 보우 폭포 & 페어몬트 호텔
+          <div class="reason">도보 1분 폭포 도달. 포토스팟.</div>
+        </li>
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+        <li>🛏️ <span class="time">12:00 - 14:30</span> 점심 & 아기 낮잠
+          <div class="reason">아기 컨디션 관리.</div>
+        </li>
 
-  L.control.measure({
-    primaryLengthUnit: 'kilometers',
-    secondaryLengthUnit: 'meters'
-  }).addTo(map);
+        <li data-place="미네완카 호수">🚤 <span class="time">15:00 - 17:00</span> 미네완카 호수 크루즈
+          <div class="reason">밀폐형 온수 선내. 아기 선호도 높음.</div>
+        </li>
+      </ul>
+    </div>
 
-  const places = [
-    {
-      name: "레이크 루이스",
-      coords: [51.4407, -116.2146],
-      img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lake_Louise_17092005.jpg",
-      feature: "로키의 상징. 샤토호텔 앞 호수. 유모차 편한 포장산책로.",
-      caution: "주차 어렵고 비쌈. 모레인레이크와 셔틀 예약 추천."
-    },
-    {
-      name: "존스턴 협곡",
-      coords: [51.2453, -115.8396],
-      img: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Johnston_Canyon_Lower_Falls_2017.jpg",
-      feature: "절벽 사이 계곡물. 아이들이 좋아하는 숲속요정길. 유모차 가능.",
-      caution: "아침 8~8:30 도착해야 메인주차장 확률 높음."
-    },
-    {
-      name: "술푸르산(곤돌라)",
-      coords: [51.1486, -115.5834],
-      img: "https://upload.wikimedia.org/wikipedia/commons/8/8b/Banff_Gondola_Sulphur_Mountain.jpg",
-      feature: "밀폐형 곤돌라 360도 전망. 유모차/걷기 안전.",
-      caution: "오전~낮 예약 조기매진. 날씨 따라 취소 가능."
-    },
-    {
-      name: "모레인 레이크",
-      coords: [51.3217, -116.1860],
-      img: "https://upload.wikimedia.org/wikipedia/commons/0/03/Moraine_Lake_2019.jpg",
-      feature: "짙은 청록색 물빛. ten peaks가 둘러싼 장관.",
-      caution: "2일전 오전 8시 셔틀 광클 필수. 유모차 필수. 락파일 트레일 진입 불가."
-    },
-    {
-      name: "반프 선샤인 빌리지",
-      coords: [51.1153, -115.7632],
-      img: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Sunshine_Meadows.jpg",
-      feature: "알프스 스타일 고산 초원. 여름~초가을 하이킹 천국.",
-      caution: "길은 유모차 주행 불가."
-    },
-    {
-      name: "페이토 호수",
-      coords: [51.7165, -116.5220],
-      img: "https://upload.wikimedia.org/wikipedia/commons/1/1f/Peyto_Lake_2020.jpg",
-      feature: "곰발바닥 모양 옥색호수. 전망대까지 15분 완만한 숲길 유모차 가능.",
-      caution: "길 얼면 미끄러움. 날씨 확인 필수."
-    }
-  ];
-
-  places.forEach(place => {
-    const marker = L.marker(place.coords).addTo(map);
-
-    const popupContent = `
-      <div class="custom-tooltip">
-        <div class="tooltip-img-wrapper">
-          <img class="tooltip-img" src="${place.img}" alt="${place.name}">
-        </div>
-
-        <div class="tooltip-content">
-          <span class="tooltip-title">${place.name}</span>
-
-          <div class="tooltip-section">
-            <span>✨ 특징</span><br>
-            ${place.feature}
-          </div>
-
-          <div class="tooltip-section warning">
-            <span>⚠️ 주의점</span><br>
-            ${place.caution}
-          </div>
-        </div>
-      </div>
-    `;
-
-    marker.bindTooltip(popupContent, {
-      permanent: false,
-      direction: "top",
-      opacity: 1,
-      className: "no-default"
-    });
-
-    marker.on("mouseover", () => marker.openTooltip());
-    marker.on("mouseout", () => marker.closeTooltip());
-  });
-</script>
-
-</body>
-</html>
+    <!-- DAY 2 -->
+    <div id="day2" class="day-content">
