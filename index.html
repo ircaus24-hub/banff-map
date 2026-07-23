@@ -1,341 +1,310 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Banff Travel Map</title>
+<title>Banff & Canmore 5-6 Days Full Itinerary</title>
 
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-/* 전체 레이아웃 */
-.layout {
-  display: flex;
-  height: 100vh;
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-
-/* 지도 */
-#map {
-  flex: 1;
-  height: 100%;
+#container { display: flex; height: 100vh; }
+#map { flex: 2; }
+#sidebar {
+  flex: 1; border-left: 1px solid #ddd;
+  padding: 16px; box-sizing: border-box; overflow-y: auto;
 }
-
-/* 일정표 패널 */
-.schedule-panel {
-  width: 340px;
-  background: #ffffff;
-  border-left: 1px solid #e0e0e0;
-  padding: 20px;
-  overflow-y: auto;
+#sidebar h2 { font-size: 18px; margin-bottom: 12px; }
+.day-tabs { list-style: none; padding: 0; margin: 0 0 12px 0; border-bottom: 1px solid #eee; }
+.day-tabs li {
+  padding: 8px 10px; cursor: pointer; font-size: 14px;
 }
-
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 15px;
-}
-
-.tab {
-  flex: 1;
-  padding: 10px;
-  background: #f0f0f0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.tab.active {
-  background: #1e88e5;
-  color: white;
-}
-
-/* Day content */
-.day-content {
-  display: none;
-}
-
-.day-content.active {
-  display: block;
-}
-
-/* 일정표 */
-.schedule-list {
-  list-style: none;
-  padding: 0;
-}
-
-.schedule-list li {
-  margin-bottom: 15px;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.schedule-list li:hover {
-  background: #f0f7ff;
-}
-
-.time {
-  font-weight: bold;
-  color: #1e88e5;
-  margin-right: 6px;
-}
-
-.reason {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #555;
-}
-
-/* 이동시간 라벨 */
-.time-label div {
-  background: #1e88e5;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: bold;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  white-space: nowrap;
-}
-
-/* 모바일 */
-@media (max-width: 768px) {
-  .layout {
-    flex-direction: column;
-  }
-  #map {
-    height: 400px;
-  }
-  .schedule-panel {
-    width: 100%;
-    border-left: none;
-    border-top: 1px solid #e0e0e0;
-  }
-}
+.day-tabs li:hover { background-color: #f5f5f5; }
+.day-tabs li.active { background-color: #e3f2fd; font-weight: 600; }
+#day-content { margin-top: 12px; font-size: 13px; line-height: 1.4; }
+.slot { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+.slot .time { font-weight: 600; color: #333; }
+.slot .title { margin-top: 2px; color: #111; font-size: 14px; }
+.slot .note { margin-top: 3px; color: #666; font-size: 12px; }
 </style>
 </head>
 
 <body>
-<div class="layout">
+<div id="container">
   <div id="map"></div>
 
-  <div class="schedule-panel">
-    <div class="tabs">
-      <button class="tab active" data-day="day1">Day 1</button>
-      <button class="tab" data-day="day2">Day 2</button>
-      <button class="tab" data-day="day3">Day 3</button>
-    </div>
+  <div id="sidebar">
+    <h2>Banff & Canmore 5-6 Days Full Itinerary</h2>
 
-    <!-- DAY 1 -->
-    <div id="day1" class="day-content active">
-      <h3>📅 Day 1: Banff Town & Valley</h3>
-      <ul class="schedule-list">
-        <li data-place="존스턴 협곡">🥾 <span class="time">08:30 - 10:00</span> 존스턴 협곡
-          <div class="reason">완만한 데크 산책. 유모차 가능.</div>
-        </li>
+    <ul class="day-tabs">
+      <li onclick="focusDay(1)" id="tab-1">Day 1 · Calgary ➜ Crossroads ➜ Canmore</li>
+      <li onclick="focusDay(2)" id="tab-2">Day 2 · Canmore ➜ Banff Valley</li>
+      <li onclick="focusDay(3)" id="tab-3">Day 3 · Moraine & Lake Louise (Shuttle)</li>
+      <li onclick="focusDay(4)" id="tab-4">Day 4 · Banff Gondola ➜ Yoho Move</li>
+      <li onclick="focusDay(5)" id="tab-5">Day 5 · Yoho & Emerald Rest</li>
+      <li onclick="focusDay(6)" id="tab-6">Day 6 · Emerald ➜ Inglewood ➜ YYC</li>
+    </ul>
 
-        <li data-place="보우 폭포">🏞️ <span class="time">10:30 - 12:00</span> 보우 폭포 & 페어몬트 호텔
-          <div class="reason">도보 1분 폭포 도달. 포토스팟.</div>
-        </li>
-
-        <li>🛏️ <span class="time">12:00 - 14:30</span> 점심 & 아기 낮잠
-          <div class="reason">아기 컨디션 관리.</div>
-        </li>
-
-        <li data-place="미네완카 호수">🚤 <span class="time">15:00 - 17:00</span> 미네완카 호수 크루즈
-          <div class="reason">밀폐형 온수 선내. 아기 선호도 높음.</div>
-        </li>
-      </ul>
-    </div>
-
-    <!-- DAY 2 -->
-    <div id="day2" class="day-content">
-      <h3>📅 Day 2: The Highlights</h3>
-      <ul class="schedule-list">
-        <li data-place="파크 앤 라이드">🚐 <span class="time">08:30 - 09:00</span> 파크 앤 라이드
-          <div class="reason">셔틀버스 탑승.</div>
-        </li>
-
-        <li data-place="모레인 레이크">🏞️ <span class="time">09:30 - 11:30</span> 모레인 호수
-          <div class="reason">청록색 호수 감상.</div>
-        </li>
-
-        <li data-place="레이크 루이스">🏰 <span class="time">12:00 - 15:00</span> 레이크 루이스 & 샤토 호텔
-          <div class="reason">통창 뷰 점심. 유모차 최적.</div>
-        </li>
-      </ul>
-    </div>
-
-    <!-- DAY 3 -->
-    <div id="day3" class="day-content">
-      <h3>📅 Day 3: Mountain Top & Yoho</h3>
-      <ul class="schedule-list">
-        <li data-place="술푸르산(곤돌라)">🚡 <span class="time">09:00 - 11:30</span> 밴프 곤돌라
-          <div class="reason">360도 뷰. 데크 유모차 가능.</div>
-        </li>
-
-        <li data-place="페이토 호수">🏞️ <span class="time">12:00 - 13:30</span> 페이토 호수
-          <div class="reason">전망대까지 완만한 숲길.</div>
-        </li>
-
-        <li data-place="에메랄드 레이크">🏨 <span class="time">14:30 - </span> 에메랄드 레이크 롯지 체크인
-          <div class="reason">요호 국립공원 힐링 일정.</div>
-        </li>
-      </ul>
-    </div>
+    <div id="day-content"></div>
   </div>
 </div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
-// 지도 생성
-const map = L.map("map").setView([51.178, -115.57], 10);
-
-// 타일 레이어
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 18
-}).addTo(map);
-
-// 장소 데이터
+/* ---------------------------
+   장소 데이터 (핀 + Day 정보)
+   이름은 영문, 일정은 한글 설명
+---------------------------- */
 const places = [
-  { name: "존스턴 협곡", coords: [51.245, -115.84], img: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Johnston_Canyon.jpg" },
-  { name: "보우 폭포", coords: [51.167, -115.56], img: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Bow_Falls_Banff.jpg" },
-  { name: "미네완카 호수", coords: [51.25, -115.43], img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lake_Minnewanka.jpg" },
+  // Day 1
+  { id:"d1_airport", day:1, name:"Calgary International Airport (YYC)", coords:[51.131,-114.010] },
+  { id:"d1_crossroads", day:1, name:"Crossroads Market", coords:[51.034,-114.057] },
+  { id:"d1_engine_bridge", day:1, name:"Canmore Engine Bridge", coords:[51.089,-115.351] },
 
-  { name: "파크 앤 라이드", coords: [51.089, -115.55], img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Banff_Ski_Area.jpg" },
-  { name: "모레인 레이크", coords: [51.321, -116.186], img: "https://upload.wikimedia.org/wikipedia/commons/0/0e/Moraine_Lake_2019.jpg" },
-  { name: "레이크 루이스", coords: [51.416, -116.212], img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lake_Louise_17092005.jpg" },
+  // Day 2
+  { id:"d2_johnston", day:2, name:"Johnston Canyon", coords:[51.245,-115.839] },
+  { id:"d2_banff_town", day:2, name:"Banff Town", coords:[51.178,-115.571] },
+  { id:"d2_minnewanka", day:2, name:"Lake Minnewanka", coords:[51.252,-115.473] },
+  { id:"d2_twojack", day:2, name:"Two Jack Lake", coords:[51.236,-115.461] },
 
-  { name: "술푸르산(곤돌라)", coords: [51.148, -115.57], img: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Sulphur_Mountain_Gondola.jpg" },
-  { name: "페이토 호수", coords: [51.716, -116.522], img: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Peyto_Lake_2019.jpg" },
-  { name: "에메랄드 레이크", coords: [51.442, -116.531], img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/Emerald_Lake_Yoho.jpg" }
+  // Day 3
+  { id:"d3_park_ride", day:3, name:"Lake Louise Ski Resort Park & Ride", coords:[51.441,-116.144] },
+  { id:"d3_moraine", day:3, name:"Moraine Lake", coords:[51.321,-116.186] },
+  { id:"d3_lakelouise", day:3, name:"Lake Louise", coords:[51.416,-116.215] },
+  { id:"d3_fairmont", day:3, name:"Fairmont Chateau Lake Louise", coords:[51.4165,-116.212] },
+
+  // Day 4
+  { id:"d4_gondola", day:4, name:"Banff Gondola (Sulphur Mountain)", coords:[51.148,-115.571] },
+  { id:"d4_peyto", day:4, name:"Peyto Lake Viewpoint", coords:[51.716,-116.522] },
+  { id:"d4_emerald_lodge", day:4, name:"Emerald Lake Lodge", coords:[51.442,-116.530] },
+
+  // Day 5
+  { id:"d5_emerald_trail", day:5, name:"Emerald Lake Lakeside Trail", coords:[51.442,-116.530] },
+  { id:"d5_cilantro", day:5, name:"Cilantro on the Lake", coords:[51.4422,-116.529] },
+  { id:"d5_natural_bridge", day:5, name:"Natural Bridge", coords:[51.430,-116.573] },
+
+  // Day 6
+  { id:"d6_emerald_checkout", day:6, name:"Emerald Lake Lodge", coords:[51.442,-116.530] },
+  { id:"d6_inglewood", day:6, name:"Inglewood District", coords:[51.044,-114.035] },
+  { id:"d6_next_page", day:6, name:"The Next Page Bookstore", coords:[51.0445,-114.034] },
+  { id:"d6_airport", day:6, name:"Calgary International Airport (YYC)", coords:[51.131,-114.010] }
 ];
 
-// 팝업 HTML 생성
+/* ---------------------------
+   Day별 일정 텍스트 (가독성 버전)
+---------------------------- */
+const dayTexts = {
+  1: `
+<div class="slot">
+  <div class="time">12:30 - 14:00</div>
+  <div class="title">Calgary International Airport (YYC) 도착 및 렌터카 픽업</div>
+  <div class="note">유모차 수령, 입국 수속 및 카시트 등 버퍼 시간</div>
+</div>
+<div class="slot">
+  <div class="time">14:20 - 15:40</div>
+  <div class="title">Crossroads Market 구경 및 늦은 점심 식사</div>
+  <div class="note">금~일 5시까지 운영. 드라마 속 파머스 마켓에서 로컬 푸드로 늦은 점심 해결</div>
+</div>
+<div class="slot">
+  <div class="time">15:40 - 17:00</div>
+  <div class="title">캔모어 이동 및 아기 낮잠 (Rest)</div>
+  <div class="note">마켓 ➜ 캔모어 고속도로 직행 약 1시간 10분, 이동 중 낮잠 시간 확보</div>
+</div>
+<div class="slot">
+  <div class="time">17:00 - 18:30</div>
+  <div class="title">Canmore Engine Bridge 산책</div>
+  <div class="note">캔모어 도착 후 평지 산책로에서 유모차 산책</div>
+</div>
+<div class="slot">
+  <div class="time">18:30 -</div>
+  <div class="title">캔모어 숙소 체크인 및 Safeway 장보기</div>
+  <div class="note">캔모어 1박</div>
+</div>
+`,
+  2: `
+<div class="slot">
+  <div class="time">09:00 - 09:40</div>
+  <div class="title">Canmore 숙소 출발 ➜ Johnston Canyon 이동</div>
+  <div class="note">캘거리 출발 대비 이동 시간이 1시간 단축되어 여유</div>
+</div>
+<div class="slot">
+  <div class="time">09:50 - 11:30</div>
+  <div class="title">Johnston Canyon</div>
+  <div class="note">완만한 철제 데크를 따라 하부 폭포까지만 유모차 아기 동반 산책 (컨디션 따라 생략 가능)</div>
+</div>
+<div class="slot">
+  <div class="time">11:30 - 14:30</div>
+  <div class="title">Banff Town 점심 식사 및 아기 낮잠 (Rest)</div>
+  <div class="note">하이킹 후 아기 체력 관리를 위해 타운 내 고정 휴식 및 식사</div>
+</div>
+<div class="slot">
+  <div class="time">15:00 - 16:30</div>
+  <div class="title">Lake Minnewanka Cruise</div>
+  <div class="note">따뜻하게 밀폐된 선내에서 약 1시간 호수 유람 (아기 선호도 최상)</div>
+</div>
+<div class="slot">
+  <div class="time">16:40 - 17:30</div>
+  <div class="title">Two Jack Lake</div>
+  <div class="note">크루즈 연계 코스(차로 3분). 잔디밭 유모차 산책과 돌멩이 놀이</div>
+</div>
+<div class="slot">
+  <div class="time">17:30 -</div>
+  <div class="title">캔모어 숙소 복귀 및 휴식</div>
+  <div class="note">캔모어 2박</div>
+</div>
+`,
+  3: `
+<div class="slot">
+  <div class="time">08:00 - 08:40</div>
+  <div class="title">Canmore 숙소 출발 ➜ Park & Ride 이동</div>
+  <div class="note">레이크 루이스 스키장 주차장 셔틀 탑승 장소로 직행</div>
+</div>
+<div class="slot">
+  <div class="time">08:40 - 09:10</div>
+  <div class="title">국립공원 공식 셔틀 탑승</div>
+  <div class="note">2일 전 오전 8시 예약 도전, 접이식 유모차 필수</div>
+</div>
+<div class="slot">
+  <div class="time">09:35 - 11:30</div>
+  <div class="title">Moraine Lake</div>
+  <div class="note">가장 선명한 청록색 호수 감상, 호숫가 평지 유모차 주행 (락파일 전망대는 경사로 인해 비추천)</div>
+</div>
+<div class="slot">
+  <div class="time">12:00 - 15:00</div>
+  <div class="title">Lake Louise & Fairmont Chateau Lake Louise</div>
+  <div class="note">커넥션 셔틀 이동, 페어몬트 호텔 구경 및 평지 산책 (호텔 점심 시 예약 필수, 아니면 시내 식사)</div>
+</div>
+<div class="slot">
+  <div class="time">15:00 -</div>
+  <div class="title">셔틀로 주차장 복귀 후 캔모어 숙소 이동 및 휴식</div>
+  <div class="note">캔모어 3박</div>
+</div>
+`,
+  4: `
+<div class="slot">
+  <div class="time">09:00 - 09:30</div>
+  <div class="title">Canmore 숙소 체크아웃 ➜ Banff Gondola 이동</div>
+  <div class="note">요호 국립공원으로 넘어가기 전 밴프 마지막 코스</div>
+</div>
+<div class="slot">
+  <div class="time">09:30 - 12:00</div>
+  <div class="title">Sulphur Mountain (Banff Gondola)</div>
+  <div class="note">곤돌라 오전~낮 인기, 사전 예매 권장. 정상 데크 유모차 산책, 패딩 필수, 실내 미디어 박물관</div>
+</div>
+<div class="slot">
+  <div class="time">12:00 - 13:30</div>
+  <div class="title">Icefields Parkway 드라이브 & Peyto Lake 경유</div>
+  <div class="note">요호 이동 동선 연계, 전망대 완만 숲길 유모차 산책 (힘들면 드라이브로 대체)</div>
+</div>
+<div class="slot">
+  <div class="time">13:30 - 14:30</div>
+  <div class="title">Yoho National Park 진입 및 늦은 점심</div>
+  <div class="note">드라이브 중 로컬 다이닝에서 식사 후 최종 목적지 이동</div>
+</div>
+<div class="slot">
+  <div class="time">15:00 -</div>
+  <div class="title">Emerald Lake Lodge 체크인 및 휴식</div>
+  <div class="note">에메랄드 1박</div>
+</div>
+`,
+  5: `
+<div class="slot">
+  <div class="time">09:30 - 11:30</div>
+  <div class="title">Emerald Lake 호숫가 평지 산책</div>
+  <div class="note">유모차 주행이 편한 호숫가 숲길 산책과 안전한 물가 자갈밭 물놀이</div>
+</div>
+<div class="slot">
+  <div class="time">11:30 - 13:30</div>
+  <div class="title">Cilantro on the Lake 또는 롯지 다이닝 점심</div>
+  <div class="note">호수가 내려다보이는 롯지 연계 레스토랑에서 여유로운 다이닝</div>
+</div>
+<div class="slot">
+  <div class="time">14:00 - 15:00</div>
+  <div class="title">Natural Bridge 관람</div>
+  <div class="note">롯지에서 차로 5분, 주차장 바로 앞 기암괴석과 거센 물줄기 관찰</div>
+</div>
+<div class="slot">
+  <div class="time">15:30 - 17:30</div>
+  <div class="title">Emerald Lake Lodge 벽난로 라운지 휴식 및 아기 낮잠</div>
+  <div class="note">후반부 체력 방어, 에메랄드 2박</div>
+</div>
+`,
+  6: `
+<div class="slot">
+  <div class="time">09:30 - 12:00</div>
+  <div class="title">Emerald Lake Lodge 체크아웃 및 캘거리 이동</div>
+  <div class="note">캘거리 진입 전 이동시간 낮잠 (약 2.5시간 소요)</div>
+</div>
+<div class="slot">
+  <div class="time">12:00 - 13:30</div>
+  <div class="title">Inglewood 지구 점심 식사 & The Next Page 서점 구경</div>
+  <div class="note">드라마 서점 내부를 둘러보고 잉글우드 거리에서 점심 식사</div>
+</div>
+<div class="slot">
+  <div class="time">13:45 - 14:15</div>
+  <div class="title">캘거리 공항 인근 렌터카 주유 및 최종 반납</div>
+  <div class="note">공항 반납처 근처 주유 및 렌터카 반납</div>
+</div>
+<div class="slot">
+  <div class="time">14:15 - 17:00</div>
+  <div class="title">Calgary International Airport (YYC) 수속 및 17:00 비행기 탑승</div>
+  <div class="note">출국 수속 및 탑승 대기</div>
+</div>
+`
+};
+
+/* ---------------------------
+   Leaflet 맵 생성
+---------------------------- */
+const map = L.map('map').setView([51.178, -115.571], 8);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:18 }).addTo(map);
+
+const markers = {};
+const dayColors = {1:"red",2:"blue",3:"green",4:"orange",5:"purple",6:"brown"};
+
+/* 모든 장소 핀 표시 + 클릭 시 Day 연동 */
 places.forEach(p => {
-  p.popupHTML = `
-    <div>
-      <img src="${p.img}" style="width:100%; border-radius:8px;" />
-      <h4>${p.name}</h4>
-    </div>
-  `;
+  const m = L.marker(p.coords).addTo(map);
+  m.bindTooltip(p.name, {direction:"top", offset:[0,-10]});
+  m.on("click", () => focusDay(p.day));
+  markers[p.id] = m;
 });
 
-// 마커 저장
-const markerMap = {};
-
-places.forEach(place => {
-  const marker = L.marker(place.coords).addTo(map);
-  markerMap[place.name] = marker;
-
-  marker.bindPopup(place.popupHTML, {
-    maxWidth: 260,
-    className: "custom-popup"
-  });
-});
-
-// 이동시간 데이터
-const travelTimes = {
-  "존스턴 협곡→보우 폭포": "20분",
-  "보우 폭포→미네완카 호수": "15분",
-  "파크 앤 라이드→모레인 레이크": "30분",
-  "모레인 레이크→레이크 루이스": "25분",
-  "술푸르산(곤돌라)→페이토 호수": "1시간",
-  "페이토 호수→에메랄드 레이크": "40분"
-};
-
-// Day별 경로
-const dayRoutes = {
-  day1: ["존스턴 협곡", "보우 폭포", "미네완카 호수"],
-  day2: ["파크 앤 라이드", "모레인 레이크", "레이크 루이스"],
-  day3: ["술푸르산(곤돌라)", "페이토 호수", "에메랄드 레이크"]
-};
-
-let currentRouteLine = null;
-let currentLabels = [];
-
-function midpoint(a, b) {
-  return L.latLng((a.lat + b.lat) / 2, (a.lng + b.lng) / 2);
-}
-
-function drawRouteWithTimes(dayKey) {
-  if (currentRouteLine) map.removeLayer(currentRouteLine);
-  currentLabels.forEach(l => map.removeLayer(l));
-  currentLabels = [];
-
-  const names = dayRoutes[dayKey];
-  const coords = names.map(n => markerMap[n].getLatLng());
-
-  currentRouteLine = L.polyline(coords, {
-    color: "#1e88e5",
-    weight: 4,
-    opacity: 0.7
-  }).addTo(map);
-
-  for (let i = 0; i < coords.length - 1; i++) {
-    const start = names[i];
-    const end = names[i + 1];
-    const key = `${start}→${end}`;
-    const time = travelTimes[key];
-
-    if (time) {
-      const mid = midpoint(coords[i], coords[i + 1]);
-      const label = L.marker(mid, {
-        icon: L.divIcon({
-          className: "time-label",
-          html: `<div>${time}</div>`
-        })
-      }).addTo(map);
-
-      currentLabels.push(label);
-    }
+/* Day별 점선 경로 표시 */
+for (let d=1; d<=6; d++){
+  const pts = places.filter(p => p.day===d);
+  if (pts.length > 1){
+    L.polyline(pts.map(p=>p.coords), {
+      color: dayColors[d], weight:3, dashArray:"5,10"
+    }).addTo(map);
   }
-
-  map.fitBounds(currentRouteLine.getBounds());
 }
 
-// 탭 클릭 → 경로 표시
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".day-content").forEach(c => c.classList.remove("active"));
+/* ---------------------------
+   Day 탭 클릭 시 연동
+---------------------------- */
+function focusDay(day){
+  // 탭 active 처리
+  for (let d=1; d<=6; d++){
+    document.getElementById(`tab-${d}`).classList.toggle("active", d===day);
+  }
+  // 일정 텍스트 표시
+  document.getElementById("day-content").innerHTML = dayTexts[day];
 
-    tab.classList.add("active");
-    const dayKey = tab.dataset.day;
-    document.getElementById(dayKey).classList.add("active");
+  // 해당 Day 장소들로 맵 뷰 이동
+  const pts = places.filter(p => p.day===day);
+  if (pts.length > 0){
+    const bounds = L.latLngBounds(pts.map(p=>p.coords));
+    map.fitBounds(bounds, {padding:[20,20]});
+  }
+}
 
-    drawRouteWithTimes(dayKey);
-  });
-});
-
-// 일정표 클릭 → 지도 이동 + 팝업 + 경로 강조
-document.querySelectorAll("[data-place]").forEach(item => {
-  item.addEventListener("click", () => {
-    const name = item.dataset.place;
-    const marker = markerMap[name];
-
-    map.setView(marker.getLatLng(), 12, { animate: true });
-    marker.openPopup();
-
-    if (currentRouteLine) {
-      currentRouteLine.setStyle({ weight: 6, opacity: 1 });
-      setTimeout(() => {
-        currentRouteLine.setStyle({ weight: 4, opacity: 0.7 });
-      }, 800);
-    }
-  });
-});
-
-// 초기 Day 1 경로 표시
-drawRouteWithTimes("day1");
+/* 초기 상태: Day 1 선택 */
+focusDay(1);
 </script>
 </body>
 </html>
