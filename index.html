@@ -156,3 +156,186 @@
 
     <!-- DAY 2 -->
     <div id="day2" class="day-content">
+      <h3>📅 Day 2: The Highlights</h3>
+      <ul class="schedule-list">
+        <li data-place="파크 앤 라이드">🚐 <span class="time">08:30 - 09:00</span> 파크 앤 라이드
+          <div class="reason">셔틀버스 탑승.</div>
+        </li>
+
+        <li data-place="모레인 레이크">🏞️ <span class="time">09:30 - 11:30</span> 모레인 호수
+          <div class="reason">청록색 호수 감상.</div>
+        </li>
+
+        <li data-place="레이크 루이스">🏰 <span class="time">12:00 - 15:00</span> 레이크 루이스 & 샤토 호텔
+          <div class="reason">통창 뷰 점심. 유모차 최적.</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- DAY 3 -->
+    <div id="day3" class="day-content">
+      <h3>📅 Day 3: Mountain Top & Yoho</h3>
+      <ul class="schedule-list">
+        <li data-place="술푸르산(곤돌라)">🚡 <span class="time">09:00 - 11:30</span> 밴프 곤돌라
+          <div class="reason">360도 뷰. 데크 유모차 가능.</div>
+        </li>
+
+        <li data-place="페이토 호수">🏞️ <span class="time">12:00 - 13:30</span> 페이토 호수
+          <div class="reason">전망대까지 완만한 숲길.</div>
+        </li>
+
+        <li data-place="에메랄드 레이크">🏨 <span class="time">14:30 - </span> 에메랄드 레이크 롯지 체크인
+          <div class="reason">요호 국립공원 힐링 일정.</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+// 지도 생성
+const map = L.map("map").setView([51.178, -115.57], 10);
+
+// 타일 레이어
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 18
+}).addTo(map);
+
+// 장소 데이터
+const places = [
+  { name: "존스턴 협곡", coords: [51.245, -115.84], img: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Johnston_Canyon.jpg" },
+  { name: "보우 폭포", coords: [51.167, -115.56], img: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Bow_Falls_Banff.jpg" },
+  { name: "미네완카 호수", coords: [51.25, -115.43], img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lake_Minnewanka.jpg" },
+
+  { name: "파크 앤 라이드", coords: [51.089, -115.55], img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Banff_Ski_Area.jpg" },
+  { name: "모레인 레이크", coords: [51.321, -116.186], img: "https://upload.wikimedia.org/wikipedia/commons/0/0e/Moraine_Lake_2019.jpg" },
+  { name: "레이크 루이스", coords: [51.416, -116.212], img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Lake_Louise_17092005.jpg" },
+
+  { name: "술푸르산(곤돌라)", coords: [51.148, -115.57], img: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Sulphur_Mountain_Gondola.jpg" },
+  { name: "페이토 호수", coords: [51.716, -116.522], img: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Peyto_Lake_2019.jpg" },
+  { name: "에메랄드 레이크", coords: [51.442, -116.531], img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/Emerald_Lake_Yoho.jpg" }
+];
+
+// 팝업 HTML 생성
+places.forEach(p => {
+  p.popupHTML = `
+    <div>
+      <img src="${p.img}" style="width:100%; border-radius:8px;" />
+      <h4>${p.name}</h4>
+    </div>
+  `;
+});
+
+// 마커 저장
+const markerMap = {};
+
+places.forEach(place => {
+  const marker = L.marker(place.coords).addTo(map);
+  markerMap[place.name] = marker;
+
+  marker.bindPopup(place.popupHTML, {
+    maxWidth: 260,
+    className: "custom-popup"
+  });
+});
+
+// 이동시간 데이터
+const travelTimes = {
+  "존스턴 협곡→보우 폭포": "20분",
+  "보우 폭포→미네완카 호수": "15분",
+  "파크 앤 라이드→모레인 레이크": "30분",
+  "모레인 레이크→레이크 루이스": "25분",
+  "술푸르산(곤돌라)→페이토 호수": "1시간",
+  "페이토 호수→에메랄드 레이크": "40분"
+};
+
+// Day별 경로
+const dayRoutes = {
+  day1: ["존스턴 협곡", "보우 폭포", "미네완카 호수"],
+  day2: ["파크 앤 라이드", "모레인 레이크", "레이크 루이스"],
+  day3: ["술푸르산(곤돌라)", "페이토 호수", "에메랄드 레이크"]
+};
+
+let currentRouteLine = null;
+let currentLabels = [];
+
+function midpoint(a, b) {
+  return L.latLng((a.lat + b.lat) / 2, (a.lng + b.lng) / 2);
+}
+
+function drawRouteWithTimes(dayKey) {
+  if (currentRouteLine) map.removeLayer(currentRouteLine);
+  currentLabels.forEach(l => map.removeLayer(l));
+  currentLabels = [];
+
+  const names = dayRoutes[dayKey];
+  const coords = names.map(n => markerMap[n].getLatLng());
+
+  currentRouteLine = L.polyline(coords, {
+    color: "#1e88e5",
+    weight: 4,
+    opacity: 0.7
+  }).addTo(map);
+
+  for (let i = 0; i < coords.length - 1; i++) {
+    const start = names[i];
+    const end = names[i + 1];
+    const key = `${start}→${end}`;
+    const time = travelTimes[key];
+
+    if (time) {
+      const mid = midpoint(coords[i], coords[i + 1]);
+      const label = L.marker(mid, {
+        icon: L.divIcon({
+          className: "time-label",
+          html: `<div>${time}</div>`
+        })
+      }).addTo(map);
+
+      currentLabels.push(label);
+    }
+  }
+
+  map.fitBounds(currentRouteLine.getBounds());
+}
+
+// 탭 클릭 → 경로 표시
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".day-content").forEach(c => c.classList.remove("active"));
+
+    tab.classList.add("active");
+    const dayKey = tab.dataset.day;
+    document.getElementById(dayKey).classList.add("active");
+
+    drawRouteWithTimes(dayKey);
+  });
+});
+
+// 일정표 클릭 → 지도 이동 + 팝업 + 경로 강조
+document.querySelectorAll("[data-place]").forEach(item => {
+  item.addEventListener("click", () => {
+    const name = item.dataset.place;
+    const marker = markerMap[name];
+
+    map.setView(marker.getLatLng(), 12, { animate: true });
+    marker.openPopup();
+
+    if (currentRouteLine) {
+      currentRouteLine.setStyle({ weight: 6, opacity: 1 });
+      setTimeout(() => {
+        currentRouteLine.setStyle({ weight: 4, opacity: 0.7 });
+      }, 800);
+    }
+  });
+});
+
+// 초기 Day 1 경로 표시
+drawRouteWithTimes("day1");
+</script>
+</body>
+</html>
